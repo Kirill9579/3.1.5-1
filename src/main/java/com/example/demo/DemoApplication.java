@@ -10,68 +10,47 @@ import java.util.Objects;
 
 @SpringBootApplication
 public class DemoApplication {
+    static String url = "http://94.198.50.185:7081/api/users";
+    static RestTemplate restTemplate = new RestTemplate();
 
-	static RestTemplate restTemplate = new RestTemplate();
-	static String baseUrl = "http://94.198.50.185:7081/api/users";
+    static StringBuilder result = new StringBuilder();
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
-		useExchangeMethodsOfRestTemplate();
-	}
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> entity;
+        User newUser = new User(3L, "James", "Brown", (byte) 2);
 
-	private static void useExchangeMethodsOfRestTemplate() {
+        String cookie = getAllUsers();
+        headers.set("Cookie", cookie);
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
+        entity = new HttpEntity<>(newUser, headers);
+        ResponseEntity<String> responseEntityPOST = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        result.append(responseEntityPOST.getBody());
 
-		HttpEntity<Object> requestEntity = new HttpEntity<>(headers);
+        newUser.setName("Thomas");
+        newUser.setLastName("Shelby");
 
-		ResponseEntity<List> responseEntity = getListUserByExchangeMethod(requestEntity);
-		headers.set("Cookie", String.join(";", Objects.requireNonNull(responseEntity.getHeaders().get("Set-Cookie"))));
+        entity = new HttpEntity<>(newUser, headers);
+        ResponseEntity<String> responseEntityPUT = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+        result.append(responseEntityPUT.getBody());
 
-		User sysUser = new User();
-		sysUser.setId(3L);
-		sysUser.setName("James");
-		sysUser.setLastName("Brown");
-		sysUser.setAge((byte) 18);
-		requestEntity = new HttpEntity<>(sysUser, headers);
-		addUserByExchangeMethod(requestEntity);
+        entity = new HttpEntity<>(newUser, headers);
+        ResponseEntity<String> responseEntityDELETE = restTemplate.exchange(url + "/3", HttpMethod.DELETE, entity, String.class);
+        result.append(responseEntityDELETE.getBody());
 
-		sysUser.setName("Thomas");
-		sysUser.setLastName("Shelby");
-		updateUserByExchangeMethod(requestEntity);
+        System.out.println(result);
+    }
 
-		deleteUserByExchangeMethod(requestEntity);
-	}
+    static String getAllUsers() {
+        HttpEntity<String> res = new HttpEntity<>("");
+        HttpEntity<String> responseGet = restTemplate.exchange(url, HttpMethod.GET, res, String.class);
+        HttpHeaders headers = responseGet.getHeaders();
+        String setCookie = headers.getFirst(HttpHeaders.SET_COOKIE);
+        System.out.println(setCookie);
+        return setCookie;
+    }
 
-	private static ResponseEntity<List> getListUserByExchangeMethod(HttpEntity<Object> requestEntity) {
-		ResponseEntity<List> responseEntity = restTemplate.exchange(baseUrl,
-				HttpMethod.GET,
-				requestEntity,
-				List.class);
 
-		HttpHeaders responseHeaders = responseEntity.getHeaders();
-		return responseEntity;
-	}
-
-	private static void addUserByExchangeMethod(HttpEntity<Object> requestEntity) {
-		ResponseEntity<String> responseEntity = restTemplate.exchange(baseUrl, HttpMethod.POST, requestEntity, String.class);
-
-		String userDetails = responseEntity.getBody();
-		HttpHeaders responseHeaders = responseEntity.getHeaders();
-	}
-
-	private static void updateUserByExchangeMethod(HttpEntity<Object> requestEntity) {
-		ResponseEntity<String> responseEntity = restTemplate.exchange(baseUrl, HttpMethod.PUT, requestEntity, String.class);
-
-		String userDetails = responseEntity.getBody();
-		HttpHeaders responseHeaders = responseEntity.getHeaders();
-	}
-
-	private static void deleteUserByExchangeMethod(HttpEntity<Object> requestEntity) {
-		ResponseEntity<String> responseEntity = restTemplate.exchange(baseUrl + "/3", HttpMethod.DELETE, requestEntity, String.class);
-
-		String userDetails = responseEntity.getBody();
-		HttpHeaders responseHeaders = responseEntity.getHeaders();
-	}
 }

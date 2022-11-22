@@ -15,4 +15,11 @@ public class User {
     private String lastName;
     private Byte age;
 
+    public User(String name, String lastName, Byte age) {
+        this.name = name;
+        this.lastName = lastName;
+        this.age = age;
+    }
+
+
 }
